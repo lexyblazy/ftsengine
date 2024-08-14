@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-
 	"strconv"
 	"time"
 
@@ -42,8 +41,6 @@ func (f *FtsEngine) buildIndex() {
 	go utils.Spinner(ch, "Building Index...")
 
 	start := time.Now()
-
-	// f.index.BuildIndex2()
 
 	recordsCount := f.index.BuildIndex()
 	f.index.SaveMeta(metaFieldName, recordsCount)

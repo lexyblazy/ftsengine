@@ -234,6 +234,7 @@ func (d *Index) DropDocuments() {
 
 }
 
+// added this as a testing benchmark between RAM vs SSD 
 func (d *Index) BuildIndex2() {
 	it := d.db.NewIteratorCF(d.ro, d.cfh[cfhDocuments])
 
