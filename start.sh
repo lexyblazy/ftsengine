@@ -1,0 +1,1 @@
+go run fts.io -port=3000 -path=./dump.gz -dataDir=data
