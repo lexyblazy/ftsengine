@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	cfhDbMeta = iota
+	cfhDefault = iota
+	cfhDbMeta
 	cfhInvertedIdx
 	cfhDocuments
 )
@@ -132,7 +133,6 @@ func (d *Index) GetDocument(docId string) (Document, error) {
 	if !val.Exists() {
 		return document, errors.New("value does not exist")
 	}
-
 
 	err := json.Unmarshal(val.Data(), &document)
 
