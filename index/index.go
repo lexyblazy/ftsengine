@@ -2,6 +2,7 @@ package index
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"slices"
 	"strconv"
@@ -122,11 +123,24 @@ func (d *Index) GetMostRecentIndexedToken() []byte {
 
 }
 
-func (d *Index) GetDocument(docId string) []byte {
+func (d *Index) GetDocument(docId string) (Document, error) {
 	val, _ := d.db.GetCF(d.ro, d.cfh[cfhDocuments], []byte(docId))
-	// defer val.Free()
+	defer val.Free()
 
-	return val.Data()
+	var document Document
+
+	if !val.Exists() {
+		return document, errors.New("value does not exist")
+	}
+
+
+	err := json.Unmarshal(val.Data(), &document)
+
+	if err != nil {
+		return document, err
+	}
+
+	return document, nil
 }
 
 func (d *Index) GetFromInvertedIndex(key string) string {
@@ -186,7 +200,7 @@ func (d *Index) GetMeta(fieldName string) DbStateMeta {
 
 }
 
-func (d *Index) IndexDocument(doc Document) {
+func (d *Index) indexDocument(doc Document) {
 
 	for _, token := range analyzer.Analyze(doc.Text) {
 
@@ -234,7 +248,7 @@ func (d *Index) DropDocuments() {
 
 }
 
-// added this as a testing benchmark between RAM vs SSD 
+// added this as a testing benchmark between RAM vs SSD
 func (d *Index) BuildIndex2() {
 	it := d.db.NewIteratorCF(d.ro, d.cfh[cfhDocuments])
 
@@ -255,7 +269,7 @@ func (d *Index) BuildIndex2() {
 			continue
 		}
 
-		d.IndexDocument(doc)
+		d.indexDocument(doc)
 
 	}
 

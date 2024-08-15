@@ -19,6 +19,14 @@ type FtsEngine struct {
 	index *index.Index
 }
 
+type SearchResults struct {
+	Meta struct {
+		Count         int    `json:"count"`
+		TimeTakenSecs string `json:"timeTaken"`
+	} `json:"meta"`
+	Data []index.Document `json:"data"`
+}
+
 func (f *FtsEngine) buildIndex() {
 
 	metaFieldName := "indexMeta"
@@ -52,6 +60,7 @@ func (f *FtsEngine) buildIndex() {
 
 func (f *FtsEngine) Search(text string) []byte {
 
+	start := time.Now()
 	var r []int
 
 	for _, token := range analyzer.Analyze(text) {
@@ -71,23 +80,25 @@ func (f *FtsEngine) Search(text string) []byte {
 
 	}
 
-	var results []index.Document
+	results := SearchResults{}
+
+	docs := []index.Document{}
 
 	for _, id := range r {
-		doc := f.index.GetDocument(strconv.Itoa(id))
+		doc, err := f.index.GetDocument(strconv.Itoa(id))
 
-		if doc == nil {
-			fmt.Printf("Failed to find doc.id=%v in database \n", id)
+		if err != nil {
+			log.Printf("Failed to retrieve docId: %v , err: %s \n", id, err)
 			continue
 		}
 
-		var document index.Document
-
-		json.Unmarshal(doc, &document)
-
-		results = append(results, document)
+		docs = append(docs, doc)
 
 	}
+
+	results.Data = docs
+	results.Meta.Count = len(docs)
+	results.Meta.TimeTakenSecs = fmt.Sprintf("%.9f seconds", time.Since(start).Seconds())
 
 	res, err := json.Marshal(results)
 
