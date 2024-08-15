@@ -64,31 +64,19 @@ func StringToIntArray(str string) []int {
 }
 
 func Intersection(a []int, b []int) []int {
+	hashMapA := make(map[int]bool)
 
-	// slices.Sort(a)
-	// slices.Sort(b)
-	// fmt.Println("a is sorted array", sort.IntsAreSorted(a))
-	// fmt.Println("b is sorted array", sort.IntsAreSorted(b))
+	r := []int{}
 
-	maxLen := len(a)
-
-	if len(b) > maxLen {
-		maxLen = len(b)
+	for _, val := range a {
+		hashMapA[val] = true
 	}
 
-	r := make([]int, 0, maxLen)
-
-	var i, j int
-	for i < len(a) && j < len(b) {
-		if a[i] < b[j] {
-			i++
-		} else if a[i] > b[j] {
-			j++
-		} else {
-			r = append(r, a[i])
-			i++
-			j++
+	for _, val := range b {
+		if hashMapA[val] {
+			r = append(r, val)
 		}
 	}
+
 	return r
 }
