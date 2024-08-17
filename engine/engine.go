@@ -67,7 +67,8 @@ func (f *FtsEngine) Search(text string) []byte {
 		val := f.index.GetFromInvertedIndex(token)
 
 		if val == "" {
-			return nil
+			break // use continue for OR queries
+
 		}
 
 		ids := utils.StringToIntArray(val)
@@ -196,7 +197,7 @@ func New(path string, dataDir string) (*FtsEngine, error) {
 		return nil, err
 	}
 
-	engine := FtsEngine{
+	engine := &FtsEngine{
 		index: index,
 	}
 
@@ -208,6 +209,6 @@ func New(path string, dataDir string) (*FtsEngine, error) {
 
 	engine.buildIndex()
 
-	return &engine, nil
+	return engine, nil
 
 }
