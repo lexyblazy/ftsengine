@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"fts.io/engine"
 )
@@ -14,6 +15,16 @@ func Start(e *engine.FtsEngine, port string) {
 
 		searchTerm := r.URL.Query().Get("q")
 		exact := r.URL.Query().Get("exact")
+		page, pageErr := strconv.Atoi(r.URL.Query().Get("page"))
+		limit, limitErr := strconv.Atoi(r.URL.Query().Get("limit"))
+
+		if pageErr != nil {
+			page = 1
+		}
+
+		if limitErr != nil {
+			limit = 100
+		}
 
 		if searchTerm == "" {
 			w.WriteHeader(http.StatusBadRequest)
@@ -22,11 +33,16 @@ func Start(e *engine.FtsEngine, port string) {
 			return
 		}
 
-		exactResults := exact == "true"
-
 		w.Header().Set("Content-Type", "application/json")
 
-		w.Write(e.Search(searchTerm, exactResults))
+		params := &engine.SearchParams{
+			Page:  page,
+			Limit: limit,
+			Query: searchTerm,
+			Exact: exact == "true",
+		}
+
+		w.Write(e.Search(params))
 	})
 
 	log.Printf("Server is up and running 🚀🚀🚀 on %s \n", port)

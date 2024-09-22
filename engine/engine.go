@@ -29,6 +29,13 @@ type SearchResults struct {
 	Data []index.Document `json:"data"`
 }
 
+type SearchParams struct {
+	Page  int
+	Limit int
+	Query string
+	Exact bool
+}
+
 func (f *FtsEngine) buildIndex() {
 
 	metaFieldName := "indexMeta"
@@ -148,17 +155,17 @@ func (f *FtsEngine) rankResults(docs []index.Document, searchTokens []string) []
 
 }
 
-func (f *FtsEngine) Search(text string, exactResults bool) []byte {
+func (f *FtsEngine) Search(params *SearchParams) []byte {
 
 	start := time.Now()
-	docs := f.getDocs(text, exactResults)
+	docs := f.getDocs(params.Query, params.Exact)
 
 	results := SearchResults{}
 
 	results.Data = docs
 	results.Meta.Count = len(docs)
 	results.Meta.TimeTakenSecs = fmt.Sprintf("%.9f seconds", time.Since(start).Seconds())
-	results.Meta.Query = text
+	results.Meta.Query = params.Query
 
 	res, err := json.Marshal(results)
 
