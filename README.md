@@ -6,8 +6,9 @@ This is an ongoing improvement on [@akrylysov](https://github.com/akrylysov) [Si
 Below are the intended improvements and their status:
 - [x] Store the index on disk
 - [x] Expose searching via a http server interface
-- [ ] Sort results by relevance.
-- [ ] Extend boolean queries to support OR and NOT
+- [x] Sort results by relevance.
+- [ ] Extend boolean queries to support OR and NOT (OR is done. There's support for partial matches which can be then sorted by relevance)
+- [ ] Pagination
 - [ ] Support indexing multiple document fields.
 
 
