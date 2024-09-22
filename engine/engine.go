@@ -22,9 +22,12 @@ type FtsEngine struct {
 
 type SearchResults struct {
 	Meta struct {
-		Count         int    `json:"count"`
+		Count         int    `json:"totalResultsCount"`
+		PageCount     int    `json:"currentPageCount"`
 		TimeTakenSecs string `json:"timeTaken"`
 		Query         string `json:"searchQuery"`
+		Page          int    `json:"page"`
+		Limit         int    `json:"limit"`
 	} `json:"meta"`
 	Data []index.Document `json:"data"`
 }
@@ -157,15 +160,37 @@ func (f *FtsEngine) rankResults(docs []index.Document, searchTokens []string) []
 
 func (f *FtsEngine) Search(params *SearchParams) []byte {
 
-	start := time.Now()
-	docs := f.getDocs(params.Query, params.Exact)
+	startTime := time.Now()
+
+	docs := f.index.GetCachedSearchResults(params.Query, params.Exact)
+
+	if len(docs) == 0 {
+		docs = f.getDocs(params.Query, params.Exact)
+		// save search results for caching and pagination purposes
+		f.index.CacheSearchResults(params.Query, docs, params.Exact)
+	}
 
 	results := SearchResults{}
 
-	results.Data = docs
+	start := (params.Page - 1) * params.Limit
+	end := start + params.Limit
+
+	// handle out of bounds
+	if end > len(docs) {
+		end = len(docs)
+
+		if start > end {
+			start = end
+		}
+	}
+
+	results.Data = docs[start:end]
 	results.Meta.Count = len(docs)
-	results.Meta.TimeTakenSecs = fmt.Sprintf("%.9f seconds", time.Since(start).Seconds())
+	results.Meta.TimeTakenSecs = fmt.Sprintf("%.9f seconds", time.Since(startTime).Seconds())
 	results.Meta.Query = params.Query
+	results.Meta.Limit = params.Limit
+	results.Meta.Page = params.Page
+	results.Meta.PageCount = len(results.Data)
 
 	res, err := json.Marshal(results)
 

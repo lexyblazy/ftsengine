@@ -3,9 +3,11 @@ package index
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"fts.io/analyzer"
@@ -18,9 +20,10 @@ const (
 	cfhDbMeta
 	cfhInvertedIdx
 	cfhDocuments
+	cfhSearchResults
 )
 
-var cfNames = []string{"default", "meta", "index", "docs"}
+var cfNames = []string{"default", "meta", "index", "docs", "results"}
 
 type Index struct {
 	ro  *grocksdb.ReadOptions
@@ -60,7 +63,7 @@ func New(dataDir string) (*Index, error) {
 
 	opts := getDbOptions()
 
-	cfOptions := []*grocksdb.Options{opts, opts, opts, opts}
+	cfOptions := []*grocksdb.Options{opts, opts, opts, opts, opts}
 
 	db, cfh, err := grocksdb.OpenDbColumnFamilies(opts, dataDir, cfNames, cfOptions)
 
@@ -326,5 +329,52 @@ func (d *Index) BuildIndex() int {
 	count := d.BulkSave(wb)
 
 	return count
+
+}
+
+func getSearchResultKey(query string, exact bool) string {
+
+	searchType := "0"
+
+	if exact {
+		searchType = "1"
+	}
+
+	return fmt.Sprintf("%s:%s", strings.ToLower(query), searchType)
+}
+
+func (d *Index) CacheSearchResults(query string, docs []Document, exact bool) {
+
+	key := getSearchResultKey(query, exact)
+	val, err := json.Marshal(docs)
+
+	if err != nil {
+		log.Println("Failed to json.Marshal docs", err)
+
+		return
+	}
+
+	err = d.db.PutCF(d.wo, d.cfh[cfhSearchResults], []byte(key), val)
+
+	if err != nil {
+
+		log.Println(err)
+	}
+
+}
+
+func (d *Index) GetCachedSearchResults(query string, exact bool) []Document {
+
+	key := getSearchResultKey(query, exact)
+	val, _ := d.db.GetCF(d.ro, d.cfh[cfhSearchResults], []byte(key))
+	defer val.Free()
+
+	var docs []Document
+
+	if val.Exists() {
+		json.Unmarshal(val.Data(), &docs)
+	}
+
+	return docs
 
 }
