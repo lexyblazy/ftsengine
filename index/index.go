@@ -30,10 +30,11 @@ type Index struct {
 }
 
 type Document struct {
-	Title string `xml:"title" json:"title"`
-	URL   string `xml:"url" json:"url"`
-	Text  string `xml:"abstract" json:"abstract"`
-	ID    int    `json:"id"`
+	Title string  `xml:"title" json:"title"`
+	URL   string  `xml:"url" json:"url"`
+	Text  string  `xml:"abstract" json:"abstract"`
+	ID    int     `json:"id"`
+	Rank  float64 `json:"rank"`
 }
 
 type DbStateMeta struct {

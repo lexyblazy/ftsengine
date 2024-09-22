@@ -98,6 +98,9 @@ func (f *FtsEngine) getDocs(text string, exactResults bool) []index.Document {
 			continue
 		}
 
+		// assign default rank
+		doc.Rank = 1
+
 		docs = append(docs, doc)
 
 	}
