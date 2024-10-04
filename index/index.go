@@ -160,11 +160,9 @@ func (d *Index) GetFromInvertedIndex(key string) string {
 }
 
 func (d *Index) SaveMeta(fieldName string, count int) {
-	now := time.Now().UnixMilli()
-	nowStr := strconv.Itoa(int(now))
 
 	meta := DbStateMeta{
-		LastUpdatedAt: nowStr,
+		LastUpdatedAt: time.Now().Format(time.UnixDate),
 		Count:         count,
 	}
 

@@ -45,6 +45,10 @@ func Start(e *engine.FtsEngine, port string) {
 		w.Write(e.Search(params))
 	})
 
+	http.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
+		w.Write(e.GetStats())
+	})
+
 	log.Printf("Server is up and running 🚀🚀🚀 on %s \n", port)
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))

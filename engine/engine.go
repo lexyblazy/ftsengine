@@ -32,6 +32,11 @@ type SearchResults struct {
 	Data []index.Document `json:"data"`
 }
 
+type EngineStats struct {
+	Docs   index.DbStateMeta `json:"docs"`
+	Tokens index.DbStateMeta `json:"tokens"`
+}
+
 type SearchParams struct {
 	Page  int
 	Limit int
@@ -47,10 +52,8 @@ func (f *FtsEngine) buildIndex() {
 
 	if lastToken != nil {
 		meta := f.index.GetMeta(metaFieldName)
-		timestamp, _ := strconv.Atoi(meta.LastUpdatedAt)
-		since := time.Since(time.UnixMilli(int64(timestamp))).Round(time.Second)
 
-		log.Printf("Index already built  %v ago, skipping ⏭️⏭️ \n", since)
+		log.Printf("Index was  built at  %v, skipping ⏭️⏭️ \n", meta.LastUpdatedAt)
 		log.Printf("Index contains %v tokens \n", meta.Count)
 
 		return
@@ -186,11 +189,11 @@ func (f *FtsEngine) Search(params *SearchParams) []byte {
 
 	results.Data = docs[start:end]
 	results.Meta.Count = len(docs)
-	results.Meta.TimeTakenSecs = fmt.Sprintf("%.9f seconds", time.Since(startTime).Seconds())
 	results.Meta.Query = params.Query
 	results.Meta.Limit = params.Limit
 	results.Meta.Page = params.Page
 	results.Meta.PageCount = len(results.Data)
+	results.Meta.TimeTakenSecs = fmt.Sprintf("%.9f seconds", time.Since(startTime).Seconds())
 
 	res, err := json.Marshal(results)
 
@@ -214,9 +217,8 @@ func (f *FtsEngine) loadDocuments(path string) error {
 	if lastDocument != nil {
 
 		docsMeta := f.index.GetMeta(metaFieldName)
-		timestamp, _ := strconv.Atoi(docsMeta.LastUpdatedAt)
-		since := time.Since(time.UnixMilli(int64(timestamp))).Round(time.Second)
-		log.Printf("Documents already loaded in database, %v ago. Skipping ⏭️⏭️ \n", since)
+
+		log.Printf("Documents already loaded in database at %v. Skipping ⏭️⏭️ \n", docsMeta.LastUpdatedAt)
 		log.Printf("Documents count = %v \n", docsMeta.Count)
 
 		return nil
@@ -278,6 +280,25 @@ func (f *FtsEngine) loadDocuments(path string) error {
 	ch <- true
 
 	return nil
+}
+
+func (f *FtsEngine) GetStats() []byte {
+
+	docsMeta := f.index.GetMeta("docsMeta")
+	indexMeta := f.index.GetMeta("indexMeta")
+
+	stats := EngineStats{
+		Docs:   docsMeta,
+		Tokens: indexMeta,
+	}
+	val, err := json.Marshal(stats)
+
+	if err != nil {
+		return nil
+	}
+
+	return val
+
 }
 
 func New(path string, dataDir string) (*FtsEngine, error) {
