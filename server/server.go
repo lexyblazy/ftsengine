@@ -46,6 +46,8 @@ func Start(e *engine.FtsEngine, port string) {
 	})
 
 	http.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		w.Write(e.GetStats())
 	})
 
